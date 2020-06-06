@@ -3,15 +3,16 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  IgnorableNamespaces="uap rescap com desktop">
+  IgnorableNamespaces="uap rescap com desktop uap5">
 
   <Identity
     Name="eyecare"
     Publisher="CN=Aanand Kainth"
-    Version="1.0.5.0" />
+    Version="1.1.0.0" />
 
   <Properties>
     <DisplayName>EyeCare</DisplayName>
@@ -55,6 +56,12 @@
 			<desktop:Extension Category="windows.toastNotificationActivation">
 				<desktop:ToastNotificationActivation ToastActivatorCLSID="a7f0dda3-447a-40ad-b720-bd0ab6e29d69" />
 			</desktop:Extension>
+			<!--<desktop:Extension Category="windows.startupTask" Executable="$targetnametoken$.exe" EntryPoint="Windows.FullTrustApplication">
+				<desktop:StartupTask TaskId="App" Enabled="true" DisplayName="EyeCare" />
+			</desktop:Extension>-->
+			<uap5:Extension Category="windows.startupTask">
+				<uap5:StartupTask TaskId="EyeCare" Enabled="true"/>
+			</uap5:Extension>
 			<uap:Extension Category="windows.protocol">
 				<uap:Protocol Name="eyecare">
 					<uap:Logo>eyecare.png</uap:Logo>
