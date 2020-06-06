@@ -8,11 +8,11 @@ namespace EyeCare
     [ClassInterface(ClassInterfaceType.None)]
     [ComSourceInterfaces(typeof(INotificationActivationCallback))]
     [Guid("a7f0dda3-447a-40ad-b720-bd0ab6e29d69"), ComVisible(true)]
-    public class LinkNotificationActivator : NotificationActivator
+    public class ClearingActivator : NotificationActivator
     {
         public override void OnActivated(string invokedArgs, NotificationUserInput userInput, string appUserModelId)
         {
-            // TODO: Handle activation
+            DesktopNotificationManagerCompat.History.Clear();
         }
     }
 }

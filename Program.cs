@@ -14,14 +14,12 @@ namespace EyeCare
             if (args.Any((arg) => arg.Contains("ToastActivated"))) Environment.Exit(0);
 
             // Register COM server and activator type
-            DesktopNotificationManagerCompat.RegisterActivator<LinkNotificationActivator>();
-            DesktopNotificationManagerCompat.RegisterAumidAndComServer<LinkNotificationActivator>("Aanand.EyeCare");
+            DesktopNotificationManagerCompat.RegisterActivator<ClearingActivator>();
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<ClearingActivator>("Aanand.EyeCare");
 
             // Construct the visuals of the toast (using Notifications library)
             ToastContent toastContent = new ToastContent()
             {
-                // Arguments when the user taps body of toast
-                Launch = "action=viewConversation&conversationId=5",
 
                 Visual = new ToastVisual()
                 {
@@ -46,13 +44,16 @@ namespace EyeCare
             var doc = new XmlDocument();
             doc.LoadXml(toastContent.GetContent());
 
-            // And create the toast notification
-            var toast = new ToastNotification(doc);
+            while (true)
+            {
+                Thread.Sleep(15 * 60 * 1000);
 
-            // And then show it
-            DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+                // And create the toast notification
+                var toast = new ToastNotification(doc);
 
-            Thread.Sleep(1000);
+                // And then show it
+                DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+            }
         }
     }
 }
