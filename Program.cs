@@ -33,7 +33,7 @@ namespace EyeCare
                 },
                 new AdaptiveText()
                 {
-                    Text = "Refocus your eyes on something at least 20 feet away"
+                    Text = "Refocus your eyes on something at least 20 feet away for 20 seconds"
                 },
             }
                     }
@@ -46,13 +46,17 @@ namespace EyeCare
 
             while (true)
             {
-                Thread.Sleep(15 * 60 * 1000);
+                Thread.Sleep(20 * 59 * 1000);
 
                 // And create the toast notification
                 var toast = new ToastNotification(doc);
 
                 // And then show it
                 DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
+                Thread.Sleep(20 * 1000);
+
+                DesktopNotificationManagerCompat.History.Clear();
             }
         }
     }
