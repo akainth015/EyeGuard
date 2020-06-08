@@ -47,7 +47,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DesktopNotificationManagerCompat.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>

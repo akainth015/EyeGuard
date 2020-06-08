@@ -2,9 +2,6 @@
 using Microsoft.Toolkit.Uwp.Notifications; // Notifications library
 using Windows.Data.Xml.Dom;
 using System.Threading;
-using Windows.UI.Xaml;
-using Windows.Storage;
-using System;
 
 namespace EyeGuard
 {
