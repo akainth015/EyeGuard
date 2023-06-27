@@ -1,8 +1,5 @@
 using Microsoft.UI.Xaml;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace EyeGuard
 {
     /// <summary>
@@ -13,11 +10,9 @@ namespace EyeGuard
         public MainWindow()
         {
             InitializeComponent();
+            AppWindow.SetIcon("Assets/EyeGuard.ico");
         }
 
-        private void myButton_Click(object sender, RoutedEventArgs e)
-        {
-            myButton.Content = "Clicked";
-        }
+        // TODO: Keep the countdown timer in the main window in sync with the app
     }
 }

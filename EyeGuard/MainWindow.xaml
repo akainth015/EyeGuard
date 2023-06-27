@@ -8,7 +8,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Image Source="/Assets/EyeGuard.png" Height="256" />
+        <TextBlock Style="{StaticResource TitleTextBlockStyle}" HorizontalTextAlignment="Center">EyeGuard</TextBlock>
+        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" HorizontalTextAlignment="Center" Margin="16">
+            Your next break is in <Bold>20</Bold> minutes.
+        </TextBlock>
     </StackPanel>
 </Window>

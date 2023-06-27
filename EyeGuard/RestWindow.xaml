@@ -10,7 +10,7 @@
 
     <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
         <TextBlock HorizontalAlignment="Center" Text="Rest Your Eyes" Style="{StaticResource TitleLargeTextBlockStyle}"/>
-        <TextBlock x:Name="CountdownTextBlock" HorizontalAlignment="Center" Margin="40" Text="20" Style="{StaticResource DisplayTextBlockStyle}"/>
+        <TextBlock x:FieldModifier="public" x:Name="CountdownTextBlock" HorizontalAlignment="Center" Margin="40" Text="20" Style="{StaticResource DisplayTextBlockStyle}"/>
         <TextBlock HorizontalAlignment="Center" Text="Focus on something 20 ft. away" Style="{StaticResource SubtitleTextBlockStyle}"/>
         <Button Click="SkipBreak" HorizontalAlignment="Center" Margin="20">Skip Break</Button>
     </StackPanel>

@@ -1,33 +1,22 @@
 using Microsoft.UI.Xaml;
 using System;
-using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
 using Windows.Foundation;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using static EyeGuard.PInvokeUtils;
 
 namespace EyeGuard
 {
-    /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class RestWindow : Window
     {
-        public TypedEventHandler<RestWindow, object> Skipping = (RestWindow sender, object e) => { };
+        public TypedEventHandler<RestWindow, object> SkipBreakPressed = (RestWindow sender, object e) => { };
 
         public RestWindow()
         {
             InitializeComponent();
-            AppWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
-
-            timer = new DispatcherTimer();
-            timer.Tick += ReduceTimeRemaining;
-            timer.Interval = TimeSpan.FromSeconds(1);
-            timer.Start();
+            AppWindow.IsShownInSwitchers = false;
         }
 
-        public void ForceFocus()
+        private void ForceFocus()
         {
             AppWindow.Hide();
             AppWindow.Show();
@@ -35,27 +24,27 @@ namespace EyeGuard
             SetForegroundWindow(hWnd);
         }
 
-        private void ReduceTimeRemaining(object sender, object e)
+        public void FullscreenOnMonitor(IntPtr hMonitor)
         {
-            secondsRemaining -= 1;
-            if (secondsRemaining <= 0)
+            MonitorInfo monitorInfo = new MonitorInfo();
+            GetMonitorInfo(hMonitor, ref monitorInfo);
+
+            int x = monitorInfo.WorkArea.Left;
+            int y = monitorInfo.WorkArea.Top;
+
+            DispatcherQueue.TryEnqueue(() =>
             {
-                timer.Stop();
-                Close();
-            }
-            else
-            {
-                CountdownTextBlock.Text = secondsRemaining.ToString();
-            }
+                var pointOnMonitor = new Windows.Graphics.PointInt32(x, y);
+                AppWindow.Move(pointOnMonitor);
+                AppWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
+                ForceFocus();
+            });
         }
 
         private void SkipBreak(object sender, RoutedEventArgs e)
         {
-            Skipping(this, null);
+            SkipBreakPressed(this, null);
         }
-
-        private int secondsRemaining = 20;
-        private DispatcherTimer timer;
 
         /// <summary>
         ///     Brings the thread that created the specified window into the foreground and activates the window. Keyboard input is

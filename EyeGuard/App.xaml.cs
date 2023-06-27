@@ -1,18 +1,11 @@
-﻿using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Windows.UI.Shell;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace EyeGuard
 {
@@ -21,6 +14,8 @@ namespace EyeGuard
     /// </summary>
     public partial class App : Application
     {
+        public const int BREAK_INTERVAL = 20; // this is in minutes
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -36,229 +31,87 @@ namespace EyeGuard
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
-            AppInstance currentInstance = AppInstance.GetCurrent();
-            AppActivationArguments activationArguments = AppInstance.GetCurrent().GetActivatedEventArgs();
+            var mainInstance = AppInstance.FindOrRegisterForKey("MainInstance");
+            var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
 
-            currentInstance.Activated += OnActivated;
-
-            secretWindow = new MainWindow();
-            secretWindow.AppWindow.Show();
-            secretWindow.AppWindow.Hide();
-
-
-            // What caused the app to be launched - the user, or being registered as a startup app?
-
-            if (activationArguments.Kind == ExtendedActivationKind.Launch)
+            if (!mainInstance.IsCurrent)
             {
-                // Since Program.cs guarantees that this IS the main instance, if it was launched by the user
-                // and NOT because the app was registered as a startup application, we will send a notification 
-                // letting the user know that EyeGuard is running in the background.
-                var appNotification = new AppNotificationBuilder()
-                    .AddText("EyeGuard")
-                    .AddText("EyeGuard is running in the background, and will show itself when its time to rest.")
-                    .BuildNotification();
-
-                AppNotificationManager.Default.Show(appNotification);
+                mainInstance.RedirectActivationToAsync(activatedEventArgs).AsTask().Wait();
+                return;
             }
+
+            AppInstance.GetCurrent().Activated += NotifyAlreadyRunningInBackground;
+
+            if (activatedEventArgs.Kind == ExtendedActivationKind.Launch)
+            {
+                NotifyStartingInBackground();
+            }
+
+            mainWindow = new MainWindow();
+            mainWindow.AppWindow.Show();
+            mainWindow.AppWindow.Hide();
+
             while (true)
             {
-                await Task.Delay(TimeSpan.FromMinutes(20));
+                await Task.Delay(TimeSpan.FromMinutes(1));
+                minutesBeforeNextBreak -= 1;
 
-                bool isFocusMode = false;
-                if (FocusSessionManager.IsSupported)
+                if (minutesBeforeNextBreak == 0)
                 {
-                    isFocusMode = FocusSessionManager.GetDefault().IsFocusActive;
-                }
+                    minutesBeforeNextBreak = BREAK_INTERVAL;
 
-                IntPtr foregroundWindowHandle = GetForegroundWindow();
-                isFocusMode = isFocusMode || isFullscreen(foregroundWindowHandle);
-                
-                
-                if (!isFocusMode)
-                {
-                    EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, MonitorEnumCallBack, IntPtr.Zero);
+                    // Is it a focus session? Skip this break.
+                    if (FocusSessionManager.IsSupported && FocusSessionManager.GetDefault().IsFocusActive)
+                    {
+                        Debug.WriteLine("Skipping break because of a focus session");
+                        continue;
+                    }
+
+                    // Is the user doing a presentation, or playing a game? Skip this break.
+                    PInvokeUtils.SHQueryUserNotificationState(out var notificationState);
+                    if (notificationState != 5)
+                    {
+                        Debug.WriteLine("Skipping break because user is not accepting notifications");
+                        continue;
+                    }
+
+                    // Is the window the user is using full-screened? Skip this break.
+                    IntPtr foregroundWindow = PInvokeUtils.GetForegroundWindow();
+                    if (foregroundWindow != IntPtr.Zero && PInvokeUtils.isFullscreen(foregroundWindow))
+                    {
+                        Debug.WriteLine("Skipping break because the users's application is in full-screen");
+                        continue;
+                    }
+
+                    // If a window is full-screen on a non-primary monitor, SHQueryUserNotificationState will not
+                    // correctly report it. Instead, I will perform a rudimentary check myself based on
+
+                    var breakSession = new Break();
                 }
             }
         }
 
-        protected void OnActivated(object sender, AppActivationArguments activationArguments)
+        private static void NotifyStartingInBackground()
         {
-            var appNotification = new AppNotificationBuilder()
-                .AddText("EyeGuard")
-                .AddText("EyeGuard is already running in the background, and will show itself when its time to rest.")
+            var notification = new AppNotificationBuilder()
+                .AddText("Successfully started")
+                .AddText("EyeGuard is running in the background, and will open a window when it's time for a break.")
                 .BuildNotification();
 
-            AppNotificationManager.Default.Show(appNotification);
+            AppNotificationManager.Default.Show(notification);
         }
 
-        private bool MonitorEnumCallBack(IntPtr hMonitor, IntPtr hdcMonitor, ref RectStruct lprcMonitor, IntPtr dwData)
+        private void NotifyAlreadyRunningInBackground(object sender, AppActivationArguments e)
         {
-            Debug.WriteLine("hMonitor: " + hMonitor);
-            Debug.WriteLine("hdcMonitor: " + hdcMonitor);
-            Debug.WriteLine("lprcMonitor: " + lprcMonitor);
-            Debug.WriteLine("dwData: " + dwData);
-            MonitorInfo mon_info = new MonitorInfo();
-            bool isSuccess = GetMonitorInfo(hMonitor, ref mon_info);
-            if (!isSuccess)
-            {
-                Debug.WriteLine("GetMonitorInfo indicated failure");
-            }
-
-            int x = mon_info.WorkArea.Left;
-            int y = mon_info.WorkArea.Top;
-
-            Debug.WriteLine("(" + mon_info.WorkArea.Left + ", " + mon_info.WorkArea.Top + ")");
-
-            DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
-            {
-                var window = new RestWindow();
-                window.AppWindow.Move(new Windows.Graphics.PointInt32(x, y));
-                window.AppWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
-                window.Activate();
-
-                restWindows.Add(window);
-                window.Skipping += (RestWindow window, object e) =>
-                {
-                    foreach (var restWindow in restWindows)
-                    {
-                        restWindow.Close();
-                    }
-                };
-            });
-
-            return true;
+            var notification = new AppNotificationBuilder()
+                .AddText("Already running")
+                .AddText("Your next break will be in " + minutesBeforeNextBreak + " minutes.")
+                .BuildNotification();
+            
+            AppNotificationManager.Default.Show(notification);
         }
 
-        private Window secretWindow;
-        private List<RestWindow> restWindows = new();
-
-        bool isFullscreen(IntPtr windowHandle)
-        {
-            MonitorInfo monitorInfo = new MonitorInfo();
-            GetMonitorInfo(MonitorFromWindow(windowHandle, MONITOR_DEFAULTTOPRIMARY), ref monitorInfo);
-
-            RectStruct windowRect;
-            GetWindowRect(windowHandle, out windowRect);
-
-            return windowRect.Left == monitorInfo.Monitor.Left
-                && windowRect.Right == monitorInfo.Monitor.Right
-                && windowRect.Top == monitorInfo.Monitor.Top
-                && windowRect.Bottom == monitorInfo.Monitor.Bottom;
-        }
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool GetWindowRect(IntPtr hwnd, out RectStruct lpRect);
-
-
-        const int MONITOR_DEFAULTTONULL = 0;
-        const int MONITOR_DEFAULTTOPRIMARY = 1;
-        const int MONITOR_DEFAULTTONEAREST = 2;
-
-        [DllImport("user32.dll")]
-        static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
-
-        /// <summary>
-        ///     Retrieves a handle to the foreground window (the window with which the user is currently working). The system
-        ///     assigns a slightly higher priority to the thread that creates the foreground window than it does to other threads.
-        ///     <para>See https://msdn.microsoft.com/en-us/library/windows/desktop/ms633505%28v=vs.85%29.aspx for more information.</para>
-        /// </summary>
-        /// <returns>
-        ///     C++ ( Type: Type: HWND )<br /> The return value is a handle to the foreground window. The foreground window
-        ///     can be NULL in certain circumstances, such as when a window is losing activation.
-        /// </returns>
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("shell32.dll")]
-        static extern int SHQueryUserNotificationState(out int pquns);
-
-        [DllImport("user32.dll")]
-        internal static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
-
-        internal delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RectStruct lprcMonitor, IntPtr dwData);
-
-        [DllImport("User32.dll")]
-        static extern bool GetMonitorInfo(IntPtr hMonitor, [In, Out] ref MonitorInfo lpmi);
-
-        /// <summary>
-        /// The MONITORINFOEX structure contains information about a display monitor.
-        /// The GetMonitorInfo function stores information into a MONITORINFOEX structure or a MONITORINFO structure.
-        /// The MONITORINFOEX structure is a superset of the MONITORINFO structure. The MONITORINFOEX structure adds a string member to contain a name
-        /// for the display monitor.
-        /// </summary>
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        internal struct MonitorInfo
-        {
-            /// <summary>
-            /// The size, in bytes, of the structure. Set this member to sizeof(MONITORINFOEX) (72) before calling the GetMonitorInfo function.
-            /// Doing so lets the function determine the type of structure you are passing to it.
-            /// </summary>
-            public int Size;
-
-            /// <summary>
-            /// A RECT structure that specifies the display monitor rectangle, expressed in virtual-screen coordinates.
-            /// Note that if the monitor is not the primary display monitor, some of the rectangle's coordinates may be negative values.
-            /// </summary>
-            public RectStruct Monitor;
-
-            /// <summary>
-            /// A RECT structure that specifies the work area rectangle of the display monitor that can be used by applications,
-            /// expressed in virtual-screen coordinates. Windows uses this rectangle to maximize an application on the monitor.
-            /// The rest of the area in rcMonitor contains system windows such as the task bar and side bars.
-            /// Note that if the monitor is not the primary display monitor, some of the rectangle's coordinates may be negative values.
-            /// </summary>
-            public RectStruct WorkArea;
-
-            /// <summary>
-            /// The attributes of the display monitor.
-            ///
-            /// This member can be the following value:
-            ///   1 : MONITORINFOF_PRIMARY
-            /// </summary>
-            public uint Flags;
-
-            public MonitorInfo()
-            {
-                Size = Marshal.SizeOf(typeof(MonitorInfo));
-                Debug.WriteLine("MI size: " + Size);
-                Monitor = new RectStruct();
-                WorkArea = new RectStruct();
-                Flags = 0;
-            }
-        }
-
-        /// <summary>
-        /// The RECT structure defines the coordinates of the upper-left and lower-right corners of a rectangle.
-        /// </summary>
-        /// <see cref="http://msdn.microsoft.com/en-us/library/dd162897%28VS.85%29.aspx"/>
-        /// <remarks>
-        /// By convention, the right and bottom edges of the rectangle are normally considered exclusive.
-        /// In other words, the pixel whose coordinates are ( right, bottom ) lies immediately outside of the the rectangle.
-        /// For example, when RECT is passed to the FillRect function, the rectangle is filled up to, but not including,
-        /// the right column and bottom row of pixels. This structure is identical to the RECTL structure.
-        /// </remarks>
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RectStruct
-        {
-            /// <summary>
-            /// The x-coordinate of the upper-left corner of the rectangle.
-            /// </summary>
-            public int Left;
-
-            /// <summary>
-            /// The y-coordinate of the upper-left corner of the rectangle.
-            /// </summary>
-            public int Top;
-
-            /// <summary>
-            /// The x-coordinate of the lower-right corner of the rectangle.
-            /// </summary>
-            public int Right;
-
-            /// <summary>
-            /// The y-coordinate of the lower-right corner of the rectangle.
-            /// </summary>
-            public int Bottom;
-        }
+        private MainWindow mainWindow;
+        private int minutesBeforeNextBreak = BREAK_INTERVAL;
     }
 }
