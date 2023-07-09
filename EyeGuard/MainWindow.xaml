@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="EyeGuard.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EyeGuard"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Image Source="/Assets/EyeGuard.png" Height="256" />
+        <TextBlock Style="{StaticResource TitleTextBlockStyle}" HorizontalTextAlignment="Center">EyeGuard</TextBlock>
+        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" HorizontalTextAlignment="Center" Margin="16">
+            Your next break is in <Bold>20</Bold> minutes.
+        </TextBlock>
+    </StackPanel>
+</Window>
