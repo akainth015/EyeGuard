@@ -15,6 +15,7 @@
             </header>
             <section id="hero" class="active">
                 <div>
+                    <img src="images/EyeGuard.png" alt="Notification" height="256">
                     <h1>EyeGuard</h1>
                     <h3>Periodic reminders to refocus your eyes</h3>
 		    <a class="primary button" href="https://www.microsoft.com/en-us/p/eyeguard/9phkwflfg873?rtc=1&activetab=pivot:overviewtab">Get It Now</a>
@@ -23,12 +24,30 @@
         </div>
         <article>
             <section>
+                <img src="images/RestWindow.png" alt="A black window with a 20-second timer and a skip break button"/>
                 <h1 id="how"><a href="#how" class="self-link">How it works</a></h1>
                 <p>EyeGuard will run at startup in the background and send you a notification every 20 minutes
                     (according to the
                     <a href="https://www.medicalnewstoday.com/articles/321536#supporting-evidence">20 20 20 rule</a>).
                     It will show a timer for how long you should redirect your eyes, and disappear after it ends.</p>
-                <img src="images/eyeguard.png" alt="Notification">
+
+                <p>
+                    If you are in focus mode, playing a game, or your app is taking up the full monitor it rests on, then
+                    EyeGuard will skip the break to avoid interrupting you.
+                </p>
+            </section>
+            <section>
+                <h1 id="tools"><a href="#tools" class="self-link">Built with</a></h1>
+                <p>
+                    EyeGuard is built with the Windows App SDK, WinUI 3, and P/Invoke. 
+                    The latest version is inspired by 
+                    <a href="https://github.com/slgobinath/SafeEyes">SafeEyes</a>, by slgobinath.
+                    It is distribued with MSIX packaging, and built in Visual Studio.
+
+                    If you'd like to contribute, set up the Windows App SDK through Visual Studio,
+                    and have at it! If you encounter any issues, feel free to reach out via email or
+                    GitHub issues/discussions.
+                </p>
             </section>
             <section>
                 <h1 id="privacy"><a href="#privacy" class="self-link">Privacy Policy</a></h1>
