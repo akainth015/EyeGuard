@@ -1,3 +1,5 @@
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using System;
 using System.Runtime.InteropServices;
@@ -18,10 +20,11 @@ namespace EyeGuard
 
         private void ForceFocus()
         {
-            AppWindow.Hide();
-            AppWindow.Show();
-            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            SetForegroundWindow(hWnd);
+            // Get window handle
+            IntPtr windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            ShowWindow(windowHandle, 6);
+            SetForegroundWindow(windowHandle);
+            ShowWindow(windowHandle, 3);
         }
 
         public void FullscreenOnMonitor(IntPtr hMonitor)
@@ -31,13 +34,13 @@ namespace EyeGuard
 
             int x = monitorInfo.WorkArea.Left;
             int y = monitorInfo.WorkArea.Top;
+            var pointOnMonitor = new Windows.Graphics.PointInt32(x, y);
 
             DispatcherQueue.TryEnqueue(() =>
             {
-                var pointOnMonitor = new Windows.Graphics.PointInt32(x, y);
                 AppWindow.Move(pointOnMonitor);
-                AppWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
                 ForceFocus();
+                AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
             });
         }
 
@@ -92,8 +95,16 @@ namespace EyeGuard
         ///     </para>
         /// </remarks>
         // For Windows Mobile, replace user32.dll with coredll.dll
-        [DllImport("user32.dll")]
+        [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool SetForegroundWindow(IntPtr hWnd);
+        public static partial bool SetForegroundWindow(IntPtr hWnd);
+
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool DestroyWindow(IntPtr hWnd);
     }
 }

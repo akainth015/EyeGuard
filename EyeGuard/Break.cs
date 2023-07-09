@@ -13,7 +13,11 @@ namespace EyeGuard
         private List<RestWindow> restWindows;
         private int secondsInBreak = 20;
         private Timer countdownTimer;
-        private MediaPlayer mediaPlayer;
+        private MediaPlayer mediaPlayer = new MediaPlayer()
+        {
+            Source = MediaSource.CreateFromUri(new Uri("ms-appx:///Assets/timer-done.wav"))
+        };
+        private DispatcherQueue dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         internal Break()
         {
@@ -26,15 +30,7 @@ namespace EyeGuard
             countdownTimer.Elapsed += Tick;
             countdownTimer.Start();
 
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.Source = MediaSource.CreateFromUri(new Uri("ms-appx:///Assets/timer-done.wav"));
             mediaPlayer.Play();
-            mediaPlayer.MediaEnded += DisposeMediaPlayer;
-        }
-
-        private void DisposeMediaPlayer(MediaPlayer sender, object args)
-        {
-            sender.Dispose();
         }
 
         private void Tick(object sender, EventArgs e)
@@ -43,17 +39,14 @@ namespace EyeGuard
 
             if (secondsInBreak == 0)
             {
-                mediaPlayer = new MediaPlayer();
-                mediaPlayer.Source = MediaSource.CreateFromUri(new Uri("ms-appx:///Assets/timer-done.wav"));
                 mediaPlayer.Play();
-                mediaPlayer.MediaEnded += DisposeMediaPlayer;
                 EndBreak();
                 return;
             }
 
             foreach (var window in restWindows)
             {
-                window.DispatcherQueue.TryEnqueue(() =>
+                dispatcherQueue.TryEnqueue(() =>
                 {
                     window.CountdownTextBlock.Text = secondsInBreak.ToString();
                 });
@@ -70,14 +63,14 @@ namespace EyeGuard
             countdownTimer.Stop();
             foreach (var window in restWindows)
             {
-                window.DispatcherQueue.TryEnqueue(window.Close);
+                dispatcherQueue.TryEnqueue(window.Close);
             }
             restWindows.Clear();
         }
 
         private bool OpenRestWindowOnMonitor(IntPtr hMonitor, IntPtr hdcMonitor, ref RectStruct lprcMonitor, IntPtr dwData)
         {
-            DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+            dispatcherQueue.TryEnqueue(() =>
             {
                 var window = new RestWindow();
                 window.FullscreenOnMonitor(hMonitor);

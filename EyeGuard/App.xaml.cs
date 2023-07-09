@@ -16,6 +16,8 @@ namespace EyeGuard
     {
         public const int BREAK_INTERVAL = 20; // this is in minutes
 
+        private Break breakInstance;
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -37,12 +39,14 @@ namespace EyeGuard
             if (!mainInstance.IsCurrent)
             {
                 mainInstance.RedirectActivationToAsync(activatedEventArgs).AsTask().Wait();
+                Process.GetCurrentProcess().Kill();
                 return;
             }
 
             AppInstance.GetCurrent().Activated += NotifyAlreadyRunningInBackground;
 
-            if (activatedEventArgs.Kind == ExtendedActivationKind.Launch)
+            var clArgs = Environment.GetCommandLineArgs();
+            if (activatedEventArgs.Kind == ExtendedActivationKind.Launch && clArgs.Length == 1)
             {
                 NotifyStartingInBackground();
             }
@@ -83,10 +87,9 @@ namespace EyeGuard
                         continue;
                     }
 
-                    // If a window is full-screen on a non-primary monitor, SHQueryUserNotificationState will not
-                    // correctly report it. Instead, I will perform a rudimentary check myself based on
-
-                    var breakSession = new Break();
+                    breakInstance = new Break();
+                    await Task.Delay(TimeSpan.FromSeconds(21));
+                    AppInstance.Restart("suppressNotification");
                 }
             }
         }
