@@ -1,8 +1,7 @@
-<center>
-
-<img src="docs/images/EyeGuard.png" height="256">
+<p align="center">
+<img src="docs/images/eyeguard.png" height="256">
 <h1>EyeGuard</h1>
-</center>
+</p>
 
 ![A black window with a 20-second timer and a skip break button](docs/images/RestWindow.png)
 
