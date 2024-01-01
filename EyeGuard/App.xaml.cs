@@ -52,8 +52,6 @@ namespace EyeGuard
             }
 
             mainWindow = new MainWindow();
-            mainWindow.AppWindow.Show();
-            mainWindow.AppWindow.Hide();
 
             while (true)
             {
