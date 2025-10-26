@@ -58,6 +58,16 @@ namespace EyeGuard
                 await Task.Delay(TimeSpan.FromMinutes(1));
                 minutesBeforeNextBreak -= 1;
 
+                // If the user is not at their computer, the next break should be 20 minutes after they
+                // return and are using the computer for 20 minutes straight.
+                PInvokeUtils.SHQueryUserNotificationState(out var notificationState);
+                if (notificationState == 1)
+                {
+                    minutesBeforeNextBreak = BREAK_INTERVAL; // FOR TESTING
+                    Debug.WriteLine("Setting the next break to " + BREAK_INTERVAL + " minutes from now because the user is away");
+                    continue;
+                }
+
                 if (minutesBeforeNextBreak == 0)
                 {
                     minutesBeforeNextBreak = BREAK_INTERVAL;
@@ -66,14 +76,17 @@ namespace EyeGuard
                     if (FocusSessionManager.IsSupported && FocusSessionManager.GetDefault().IsFocusActive)
                     {
                         Debug.WriteLine("Skipping break because of a focus session");
+                        // the break should trigger immediately after the user is done with their focus session
+                        minutesBeforeNextBreak = 1;
                         continue;
                     }
 
                     // Is the user doing a presentation, or playing a game? Skip this break.
-                    PInvokeUtils.SHQueryUserNotificationState(out var notificationState);
                     if (notificationState != 5)
                     {
                         Debug.WriteLine("Skipping break because user is not accepting notifications");
+                        // the break should trigger immediately after the user is done with their activity
+                        minutesBeforeNextBreak = 1;
                         continue;
                     }
 
@@ -82,6 +95,8 @@ namespace EyeGuard
                     if (foregroundWindow != IntPtr.Zero && PInvokeUtils.isFullscreen(foregroundWindow))
                     {
                         Debug.WriteLine("Skipping break because the users's application is in full-screen");
+                        // the break should trigger immediately after the user exits full screen
+                        minutesBeforeNextBreak = 1;
                         continue;
                     }
 
@@ -104,10 +119,19 @@ namespace EyeGuard
 
         private void NotifyAlreadyRunningInBackground(object sender, AppActivationArguments e)
         {
+            string minutesLeftText;
+            if (minutesBeforeNextBreak == 1)
+            {
+                minutesLeftText = "Your next break will be in 1 minute.";
+            }
+            else
+            {
+                minutesLeftText = "Your next break will be in " + minutesBeforeNextBreak + " minutes.";
+            }
             var notification = new AppNotificationBuilder()
-                .AddText("Already running")
-                .AddText("Your next break will be in " + minutesBeforeNextBreak + " minutes.")
-                .BuildNotification();
+                    .AddText("Already running")
+                    .AddText(minutesLeftText)
+                    .BuildNotification();
             
             AppNotificationManager.Default.Show(notification);
         }
