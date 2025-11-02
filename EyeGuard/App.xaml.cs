@@ -92,6 +92,15 @@ namespace EyeGuard
                     int breakInterval = SettingsService.Instance.BreakInterval;
                     UpdateMinutesBeforeNextBreak(breakInterval);
 
+                    // Are breaks paused? Skip this break.
+                    if (SettingsService.Instance.IsPaused)
+                    {
+                        Debug.WriteLine("Skipping break because breaks are paused");
+                        // the break should trigger immediately after the pause period ends
+                        UpdateMinutesBeforeNextBreak(1);
+                        continue;
+                    }
+
                     // Is it a focus session? Skip this break.
                     if (FocusSessionManager.IsSupported && FocusSessionManager.GetDefault().IsFocusActive)
                     {

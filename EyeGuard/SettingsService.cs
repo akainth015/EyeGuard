@@ -18,6 +18,8 @@ namespace EyeGuard
         private const int MIN_BREAK_DURATION = 5; // seconds
         private const int MAX_BREAK_DURATION = 300; // seconds (5 minutes)
 
+        private const string PAUSE_UNTIL_KEY = "PauseUntil";
+
         private static SettingsService _instance;
         public static SettingsService Instance
         {
@@ -33,6 +35,7 @@ namespace EyeGuard
 
         public event EventHandler<int> BreakIntervalChanged;
         public event EventHandler<int> BreakDurationChanged;
+        public event EventHandler<DateTime?> PauseUntilChanged;
 
         private SettingsService()
         {
@@ -104,5 +107,51 @@ namespace EyeGuard
 
         public int MinBreakDuration => MIN_BREAK_DURATION;
         public int MaxBreakDuration => MAX_BREAK_DURATION;
+
+        /// <summary>
+        /// Gets or sets the UTC date/time until which breaks are paused. Null means not paused.
+        /// </summary>
+        public DateTime? PauseUntil
+        {
+            get
+            {
+                if (ApplicationData.GetDefault().LocalSettings.Values.TryGetValue(PAUSE_UNTIL_KEY, out var value))
+                {
+                    if (value is long ticks)
+                    {
+                        var utcDateTime = new DateTime(ticks, DateTimeKind.Utc);
+                        // If the pause time has passed, return null
+                        if (utcDateTime <= DateTime.UtcNow)
+                        {
+                            return null;
+                        }
+                        return utcDateTime;
+                    }
+                }
+                return null;
+            }
+            set
+            {
+                if (value.HasValue)
+                {
+                    // Store as UTC ticks
+                    var utcValue = value.Value.Kind == DateTimeKind.Utc
+                        ? value.Value
+                        : value.Value.ToUniversalTime();
+                    ApplicationData.GetDefault().LocalSettings.Values[PAUSE_UNTIL_KEY] = utcValue.Ticks;
+                }
+                else
+                {
+                    // Remove the setting
+                    ApplicationData.GetDefault().LocalSettings.Values.Remove(PAUSE_UNTIL_KEY);
+                }
+                PauseUntilChanged?.Invoke(this, value);
+            }
+        }
+
+        /// <summary>
+        /// Checks if breaks are currently paused
+        /// </summary>
+        public bool IsPaused => PauseUntil.HasValue && PauseUntil.Value > DateTime.UtcNow;
     }
 }
