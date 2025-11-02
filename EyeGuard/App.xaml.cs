@@ -14,8 +14,6 @@ namespace EyeGuard
     /// </summary>
     public partial class App : Application
     {
-        public const int BREAK_INTERVAL = 20; // this is in minutes
-
         private Break breakInstance;
 
         // Event to notify when the countdown changes
@@ -31,6 +29,15 @@ namespace EyeGuard
         public App()
         {
             InitializeComponent();
+
+            // Subscribe to settings changes
+            SettingsService.Instance.BreakIntervalChanged += OnBreakIntervalChanged;
+        }
+
+        private void OnBreakIntervalChanged(object sender, int newInterval)
+        {
+            // Reset the countdown when the interval changes
+            UpdateMinutesBeforeNextBreak(newInterval);
         }
 
         /// <summary>
@@ -60,26 +67,30 @@ namespace EyeGuard
                 NotifyStartingInBackground();
             }
 
-            secretWindow = new MainWindow();
+            //secretWindow = new MainWindow();
+            mainWindow = new MainWindow();
+            mainWindow.Activate();
 
             while (true)
             {
                 await Task.Delay(TimeSpan.FromMinutes(1));
                 UpdateMinutesBeforeNextBreak(minutesBeforeNextBreak - 1);
 
-                // If the user is not at their computer, the next break should be 20 minutes after they
-                // return and are using the computer for 20 minutes straight.
+                // If the user is not at their computer, the next break should be configured interval minutes after they
+                // return and are using the computer for that duration straight.
                 PInvokeUtils.SHQueryUserNotificationState(out var notificationState);
                 if (notificationState == 1)
                 {
-                    UpdateMinutesBeforeNextBreak(BREAK_INTERVAL);
-                    Debug.WriteLine("Setting the next break to " + BREAK_INTERVAL + " minutes from now because the user is away");
+                    int breakInterval = SettingsService.Instance.BreakInterval;
+                    UpdateMinutesBeforeNextBreak(breakInterval);
+                    Debug.WriteLine("Setting the next break to " + breakInterval + " minutes from now because the user is away");
                     continue;
                 }
 
                 if (minutesBeforeNextBreak == 0)
                 {
-                    UpdateMinutesBeforeNextBreak(BREAK_INTERVAL);
+                    int breakInterval = SettingsService.Instance.BreakInterval;
+                    UpdateMinutesBeforeNextBreak(breakInterval);
 
                     // Is it a focus session? Skip this break.
                     if (FocusSessionManager.IsSupported && FocusSessionManager.GetDefault().IsFocusActive)
@@ -182,6 +193,8 @@ namespace EyeGuard
 
         private MainWindow mainWindow;
         private MainWindow secretWindow;
-        private int minutesBeforeNextBreak = BREAK_INTERVAL;
+        private int minutesBeforeNextBreak = SettingsService.Instance.BreakInterval;
+
+        public MainWindow Window => mainWindow;
     }
 }

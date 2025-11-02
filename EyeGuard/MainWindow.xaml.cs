@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Documents;
 
 namespace EyeGuard
 {
@@ -13,31 +12,18 @@ namespace EyeGuard
             InitializeComponent();
             AppWindow.SetIcon("Assets/EyeGuard.ico");
 
-            // Subscribe to countdown changes from the App
-            var app = Application.Current as App;
-            if (app != null)
-            {
-                app.CountdownChanged += OnCountdownChanged;
-                // Initialize with actual current value
-                UpdateCountdownText(app.MinutesBeforeNextBreak);
-            }
+            // Make window borderless
+            AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+            // Using a 48 px tall title bar because a back button will be present
+            AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+
+            // Navigate to home page by default
+            ContentFrame.Navigate(typeof(HomePage));
         }
 
-        private void OnCountdownChanged(object sender, int minutesLeft)
+        public void NavigateToHome()
         {
-            // Update UI on the UI thread
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                UpdateCountdownText(minutesLeft);
-            });
-        }
-
-        private void UpdateCountdownText(int minutes)
-        {
-            CountdownTextBlock.Inlines.Clear();
-            CountdownTextBlock.Inlines.Add(new Run { Text = "Your next break is in " });
-            CountdownTextBlock.Inlines.Add(new Bold { Inlines = { new Run { Text = minutes.ToString() } } });
-            CountdownTextBlock.Inlines.Add(new Run { Text = minutes == 1 ? " minute." : " minutes." });
+            ContentFrame.Navigate(typeof(HomePage));
         }
     }
 }
