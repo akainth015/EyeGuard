@@ -57,9 +57,9 @@
                         Grid.Row="0"
                         Grid.Column="0"
                         Minimum="10"
-                        Maximum="30"
+                        Maximum="60"
                         StepFrequency="1"
-                        TickFrequency="5"
+                        TickFrequency="10"
                         TickPlacement="BottomRight"
                         VerticalAlignment="Center"
                         Margin="0,0,16,0"/>
@@ -89,7 +89,7 @@
                             HorizontalAlignment="Left"/>
                             <TextBlock
                             Grid.Column="1"
-                            Text="30 min"
+                            Text="60 min"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             HorizontalAlignment="Right"/>
                         </Grid>

@@ -11,7 +11,7 @@ namespace EyeGuard
         private const string BREAK_INTERVAL_KEY = "BreakInterval";
         private const int DEFAULT_BREAK_INTERVAL = 20; // minutes
         private const int MIN_BREAK_INTERVAL = 10; // minutes
-        private const int MAX_BREAK_INTERVAL = 30; // minutes
+        private const int MAX_BREAK_INTERVAL = 60; // minutes
 
         private const string BREAK_DURATION_KEY = "BreakDuration";
         private const int DEFAULT_BREAK_DURATION = 20; // seconds
@@ -51,7 +51,7 @@ namespace EyeGuard
         }
 
         /// <summary>
-        /// Gets or sets the break interval in minutes (between 10 and 30)
+        /// Gets or sets the break interval in minutes (between 10 and 60)
         /// </summary>
         public int BreakInterval
         {

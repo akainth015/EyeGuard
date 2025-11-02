@@ -15,6 +15,8 @@ namespace EyeGuard
     public partial class App : Application
     {
         private Break breakInstance;
+        private int consecutiveRestartSkips = 0;
+        private const int MAX_RESTART_SKIPS = 3;
 
         // Event to notify when the countdown changes
         public event EventHandler<int> CountdownChanged;
@@ -68,6 +70,7 @@ namespace EyeGuard
             }
 
             secretWindow = new MainWindow();
+            new Break();
 
             while (true)
             {
@@ -128,7 +131,7 @@ namespace EyeGuard
                     }
 
                     breakInstance = new Break();
-                    await Task.Delay(TimeSpan.FromSeconds(21));
+                    await Task.Delay(TimeSpan.FromSeconds(SettingsService.Instance.BreakDuration + 1));
 
                     // https://github.com/microsoft/microsoft-ui-xaml/issues/7282#issuecomment-1717060648
                     // The code below can be safely deleted once resolved.
@@ -136,9 +139,17 @@ namespace EyeGuard
                     {
                         Debug.WriteLine("Restarting EyeGuard to mitigate a memory leak in the WinUI framework");
                         AppInstance.Restart("suppressNotification");
-                    } else
+                    }
+                    else
                     {
-                        Debug.WriteLine("Skipping app restart because the main window is open");
+                        consecutiveRestartSkips++;
+                        Debug.WriteLine($"Skipping app restart because the main window is open (skip {consecutiveRestartSkips}/{MAX_RESTART_SKIPS})");
+
+                        if (consecutiveRestartSkips >= MAX_RESTART_SKIPS)
+                        {
+                            Debug.WriteLine($"Restarting anyway after {MAX_RESTART_SKIPS} consecutive skips to mitigate memory leak");
+                            AppInstance.Restart("suppressNotification");
+                        }
                     }
                 }
             }
