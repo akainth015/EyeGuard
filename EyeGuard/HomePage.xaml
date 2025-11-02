@@ -27,12 +27,63 @@
         </Button>
 
         <!-- Main Content -->
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="600">
             <Image Source="/Assets/EyeGuard.png" Height="256" />
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" HorizontalTextAlignment="Center">EyeGuard</TextBlock>
             <TextBlock x:Name="CountdownTextBlock" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalTextAlignment="Center" Margin="16">
                 Your next break is in <Bold>20</Bold> minutes.
             </TextBlock>
+
+            <!-- Pause Controls -->
+            <StackPanel Spacing="8" Margin="0,24,0,0" HorizontalAlignment="Center">
+                <!-- Not Paused State: Show "Pause Breaks" button -->
+                <StackPanel x:Name="NotPausedControls" Spacing="8" HorizontalAlignment="Center">
+                    <Button
+                        x:Name="ShowPauseButton"
+                        Content="Pause Breaks"
+                        Click="ShowPauseButton_Click"/>
+                </StackPanel>
+
+                <!-- Paused State: Show pause info and controls -->
+                <StackPanel x:Name="PausedControls" Spacing="8" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Button
+                            x:Name="ResumeBreaksButton"
+                            Content="Resume Breaks"
+                            Click="ResumeBreaksButton_Click"/>
+                        <Button
+                            x:Name="ChangeTimeButton"
+                            Content="Change This Time"
+                            Click="ChangeTimeButton_Click"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Date/Time Picker Controls (hidden by default) -->
+                <StackPanel x:Name="DateTimePickerControls" Spacing="8" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <DatePicker x:Name="PauseDatePicker"/>
+                        <TimePicker x:Name="PauseTimePicker"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Button
+                            x:Name="SetPauseButton"
+                            Content="Pause Until Selected Time"
+                            Click="SetPauseButton_Click"/>
+                        <Button
+                            x:Name="CancelPauseButton"
+                            Content="Cancel"
+                            Click="CancelPauseButton_Click"/>
+                    </StackPanel>
+
+                    <TextBlock
+                        x:Name="PauseStatusText"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        HorizontalTextAlignment="Center"
+                        Margin="0,8,0,0"/>
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

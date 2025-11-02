@@ -67,9 +67,7 @@ namespace EyeGuard
                 NotifyStartingInBackground();
             }
 
-            //secretWindow = new MainWindow();
-            mainWindow = new MainWindow();
-            mainWindow.Activate();
+            secretWindow = new MainWindow();
 
             while (true)
             {

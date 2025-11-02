@@ -158,39 +158,6 @@
                         </Grid>
                     </Grid>
                 </StackPanel>
-
-                <!-- Pause Setting -->
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Pause Breaks" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                    <TextBlock
-                    Text="Temporarily pause break reminders until a specific date and time."
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    TextWrapping="Wrap"/>
-
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <DatePicker x:Name="PauseDatePicker" DateChanged="PauseDatePicker_DateChanged"/>
-                            <TimePicker x:Name="PauseTimePicker" TimeChanged="PauseTimePicker_TimeChanged"/>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                            <Button
-                            x:Name="SetPauseButton"
-                            Content="Pause Until Selected Time"
-                            Click="SetPauseButton_Click"/>
-                            <Button
-                            x:Name="ClearPauseButton"
-                            Content="Resume Breaks"
-                            Click="ClearPauseButton_Click"/>
-                        </StackPanel>
-
-                        <TextBlock
-                        x:Name="PauseStatusText"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap"
-                        Margin="0,8,0,0"/>
-                    </StackPanel>
-                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>

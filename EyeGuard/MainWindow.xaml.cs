@@ -10,6 +10,7 @@ namespace EyeGuard
         public MainWindow()
         {
             InitializeComponent();
+            Title = "EyeGuard";
             AppWindow.SetIcon("Assets/EyeGuard.ico");
 
             // Make window borderless
