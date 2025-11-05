@@ -70,7 +70,6 @@ namespace EyeGuard
             }
 
             secretWindow = new MainWindow();
-            new Break();
 
             while (true)
             {
@@ -175,6 +174,9 @@ namespace EyeGuard
                     mainWindow.Closed += ClearMainWindow;
                 }
                 mainWindow.Activate();
+                // because EyeGuard doesn't currently have UI focus or whatever, the window is not opened on top
+                // so I will force focus because the user has requested it
+                mainWindow.ForceFocus();
             });
         }
 

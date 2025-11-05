@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using System;
 
 namespace EyeGuard
 {
@@ -20,6 +21,15 @@ namespace EyeGuard
 
             // Navigate to home page by default
             ContentFrame.Navigate(typeof(HomePage));
+        }
+
+        public void ForceFocus()
+        {
+            // Get window handle
+            IntPtr windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            RestWindow.ShowWindow(windowHandle, 6);
+            RestWindow.SetForegroundWindow(windowHandle);
+            RestWindow.ShowWindow(windowHandle, 1);
         }
 
         public void NavigateToHome()
