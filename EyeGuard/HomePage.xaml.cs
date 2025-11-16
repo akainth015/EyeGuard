@@ -171,7 +171,22 @@ namespace EyeGuard
             }
         }
 
-        private void ShowPauseButton_Click(object sender, RoutedEventArgs e)
+        private void QuickPause30Minutes_Click(object sender, RoutedEventArgs e)
+        {
+            SetPauseForDuration(TimeSpan.FromMinutes(30));
+        }
+
+        private void QuickPause1Hour_Click(object sender, RoutedEventArgs e)
+        {
+            SetPauseForDuration(TimeSpan.FromHours(1));
+        }
+
+        private void QuickPause8Hours_Click(object sender, RoutedEventArgs e)
+        {
+            SetPauseForDuration(TimeSpan.FromHours(8));
+        }
+
+        private void QuickPauseCustom_Click(object sender, RoutedEventArgs e)
         {
             // Set default time to current time + 1 hour
             var defaultTime = DateTime.Now.AddHours(1);
@@ -182,6 +197,16 @@ namespace EyeGuard
             // Show date/time pickers to set pause time
             NotPausedControls.Visibility = Visibility.Collapsed;
             DateTimePickerControls.Visibility = Visibility.Visible;
+        }
+
+        private void SetPauseForDuration(TimeSpan duration)
+        {
+            // Calculate pause end time
+            var pauseUntil = DateTime.Now.Add(duration).ToUniversalTime();
+            SettingsService.Instance.PauseUntil = pauseUntil;
+
+            // Update to paused state
+            UpdatePauseStatus();
         }
 
         private void ResumeBreaksButton_Click(object sender, RoutedEventArgs e)
