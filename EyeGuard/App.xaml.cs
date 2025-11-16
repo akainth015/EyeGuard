@@ -216,5 +216,6 @@ namespace EyeGuard
         private int minutesBeforeNextBreak = SettingsService.Instance.BreakInterval;
 
         public MainWindow Window => mainWindow;
+        public MainWindow SecretWindow => secretWindow;
     }
 }

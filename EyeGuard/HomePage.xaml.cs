@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using System;
+using System.Threading.Tasks;
 
 namespace EyeGuard
 {
@@ -25,6 +26,42 @@ namespace EyeGuard
 
             // Load pause settings
             LoadPauseSettings();
+
+            // Check and display add-on promotion after page is loaded
+            this.Loaded += HomePage_Loaded;
+        }
+
+        private void HomePage_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Defer the license check to avoid reentrancy issues
+            DispatcherQueue.TryEnqueue(async () =>
+            {
+                await CheckAndShowAddonPromotion();
+            });
+        }
+
+        private async Task CheckAndShowAddonPromotion()
+        {
+            bool hasPurchased = await StoreUtils.Instance.IsSettingsAddonPurchasedAsync();
+
+            if (hasPurchased)
+            {
+                // User has the add-on - hide promotion, show controls
+                SettingsAddonPromotion.Visibility = Visibility.Collapsed;
+                SettingsButton.Visibility = Visibility.Visible;
+                // Pause controls visibility is handled by UpdatePauseStatus()
+            }
+            else
+            {
+                // User doesn't have the add-on - show promotion, hide controls
+                SettingsAddonPromotion.Visibility = Visibility.Visible;
+                SettingsButton.Visibility = Visibility.Collapsed;
+
+                // Hide all pause controls
+                NotPausedControls.Visibility = Visibility.Collapsed;
+                PausedControls.Visibility = Visibility.Collapsed;
+                DateTimePickerControls.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void LoadPauseSettings()
@@ -93,8 +130,16 @@ namespace EyeGuard
             }
         }
 
-        private void SetPauseButton_Click(object sender, RoutedEventArgs e)
+        private async void SetPauseButton_Click(object sender, RoutedEventArgs e)
         {
+            // Check if user has the settings add-on license
+            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
+            {
+                // Open purchase dialog for the add-on
+                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+                return;
+            }
+
             // Combine date and time, treating as local time
             var localDateTime = PauseDatePicker.Date + PauseTimePicker.Time;
             var localDateTimeObj = localDateTime.DateTime;
@@ -134,8 +179,16 @@ namespace EyeGuard
             }
         }
 
-        private void ShowPauseButton_Click(object sender, RoutedEventArgs e)
+        private async void ShowPauseButton_Click(object sender, RoutedEventArgs e)
         {
+            // Check if user has the settings add-on license
+            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
+            {
+                // Open purchase dialog for the add-on
+                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+                return;
+            }
+
             // Set default time to current time + 1 hour
             var defaultTime = DateTime.Now.AddHours(1);
             PauseDatePicker.Date = new DateTimeOffset(defaultTime.Date);
@@ -147,15 +200,31 @@ namespace EyeGuard
             DateTimePickerControls.Visibility = Visibility.Visible;
         }
 
-        private void ResumeBreaksButton_Click(object sender, RoutedEventArgs e)
+        private async void ResumeBreaksButton_Click(object sender, RoutedEventArgs e)
         {
+            // Check if user has the settings add-on license
+            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
+            {
+                // Open purchase dialog for the add-on
+                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+                return;
+            }
+
             // Clear the pause and return to not paused state
             SettingsService.Instance.PauseUntil = null;
             UpdatePauseStatus();
         }
 
-        private void ChangeTimeButton_Click(object sender, RoutedEventArgs e)
+        private async void ChangeTimeButton_Click(object sender, RoutedEventArgs e)
         {
+            // Check if user has the settings add-on license
+            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
+            {
+                // Open purchase dialog for the add-on
+                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+                return;
+            }
+
             // Load current pause time into pickers
             var pauseUntil = SettingsService.Instance.PauseUntil;
             if (pauseUntil.HasValue)
@@ -177,9 +246,32 @@ namespace EyeGuard
             UpdatePauseStatus();
         }
 
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        private async void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
+            // Check if user has the settings add-on license
+            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
+            {
+                // Open purchase dialog for the add-on
+                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+                return;
+            }
+
             Frame.Navigate(typeof(SettingsPage));
+        }
+
+        private async void PurchaseAddonButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Attempt to purchase the add-on
+            bool purchaseSuccessful = await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+
+            // If purchase was successful, refresh the UI
+            if (purchaseSuccessful)
+            {
+                // Hide promotion, show settings button and pause controls
+                SettingsAddonPromotion.Visibility = Visibility.Collapsed;
+                SettingsButton.Visibility = Visibility.Visible;
+                UpdatePauseStatus(); // This will show the appropriate pause controls
+            }
         }
     }
 }

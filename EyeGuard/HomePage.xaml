@@ -34,6 +34,34 @@
                 Your next break is in <Bold>20</Bold> minutes.
             </TextBlock>
 
+            <!-- Settings Add-on Promotion (shown when not purchased) -->
+            <Border x:Name="SettingsAddonPromotion"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="64 32"
+                    Margin="0,24,0,0"
+                    Visibility="Collapsed">
+                <StackPanel Spacing="16">
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}"
+                               HorizontalTextAlignment="Center">
+                        Unlock EyeGuard Settings
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap"
+                               HorizontalTextAlignment="Center"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               LineHeight="28">
+                        Get access to customizable break intervals, durations, and the ability to pause breaks when you need flexibility.
+                    </TextBlock>
+                    <Button x:Name="PurchaseAddonButton"
+                            Content="Get Settings Add-on"
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Click="PurchaseAddonButton_Click"/>
+                </StackPanel>
+            </Border>
+
             <!-- Pause Controls -->
             <StackPanel Spacing="8" Margin="0,24,0,0" HorizontalAlignment="Center">
                 <!-- Not Paused State: Show "Pause Breaks" button -->
