@@ -42,7 +42,21 @@ namespace EyeGuard
 
         private async Task CheckAndShowAddonPromotion()
         {
-            bool hasPurchased = await StoreUtils.Instance.IsSettingsAddonPurchasedAsync();
+            bool hasPurchased;
+
+            try
+            {
+                hasPurchased = await StoreUtils.Instance.IsSettingsAddonPurchasedAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                System.Diagnostics.Debug.WriteLine($"Error checking add-on purchase status in HomePage: {ex.Message}");
+
+                // Fall back to cached status from Settings
+                var cachedStatus = SettingsService.Instance.CachedSettingsAddonPurchased;
+                hasPurchased = cachedStatus ?? false; // Default to false if never verified
+            }
 
             if (hasPurchased)
             {

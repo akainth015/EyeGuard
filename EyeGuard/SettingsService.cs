@@ -20,6 +20,8 @@ namespace EyeGuard
 
         private const string PAUSE_UNTIL_KEY = "PauseUntil";
 
+        private const string SETTINGS_ADDON_PURCHASED_KEY = "SettingsAddonPurchased";
+
         private static SettingsService _instance;
         public static SettingsService Instance
         {
@@ -153,5 +155,35 @@ namespace EyeGuard
         /// Checks if breaks are currently paused
         /// </summary>
         public bool IsPaused => PauseUntil.HasValue && PauseUntil.Value > DateTime.UtcNow;
+
+        /// <summary>
+        /// Gets or sets the cached license status for the Settings Add-on.
+        /// Null means unknown/never verified, false means verified as not purchased, true means verified as purchased.
+        /// </summary>
+        public bool? CachedSettingsAddonPurchased
+        {
+            get
+            {
+                if (ApplicationData.GetDefault().LocalSettings.Values.TryGetValue(SETTINGS_ADDON_PURCHASED_KEY, out var value))
+                {
+                    if (value is bool purchased)
+                    {
+                        return purchased;
+                    }
+                }
+                return null;
+            }
+            set
+            {
+                if (value.HasValue)
+                {
+                    ApplicationData.GetDefault().LocalSettings.Values[SETTINGS_ADDON_PURCHASED_KEY] = value.Value;
+                }
+                else
+                {
+                    ApplicationData.GetDefault().LocalSettings.Values.Remove(SETTINGS_ADDON_PURCHASED_KEY);
+                }
+            }
+        }
     }
 }

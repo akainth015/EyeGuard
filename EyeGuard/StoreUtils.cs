@@ -100,6 +100,7 @@ namespace EyeGuard
         /// <summary>
         /// Checks if the EyeGuard Settings Add-on is purchased by the user.
         /// Uses a short-term cache to avoid excessive Store API calls.
+        /// Falls back to cached settings if Store API fails.
         /// </summary>
         /// <returns>True if the add-on is purchased, false otherwise.</returns>
         public async Task<bool> IsSettingsAddonPurchasedAsync()
@@ -117,21 +118,43 @@ namespace EyeGuard
             }
 
             // Production mode - check actual Store license
-            // Check cache first
+            // Check in-memory cache first
             if (_cachedLicenseStatus.HasValue &&
                 (DateTime.Now - _cacheTimestamp).TotalMinutes < CACHE_DURATION_MINUTES)
             {
                 return _cachedLicenseStatus.Value;
             }
 
-            // Retrieve fresh license status
-            bool isPurchased = await CheckLicenseStatusAsync();
+            try
+            {
+                // Retrieve fresh license status from Store
+                bool isPurchased = await CheckLicenseStatusAsync();
 
-            // Update cache
-            _cachedLicenseStatus = isPurchased;
-            _cacheTimestamp = DateTime.Now;
+                // Update in-memory cache
+                _cachedLicenseStatus = isPurchased;
+                _cacheTimestamp = DateTime.Now;
 
-            return isPurchased;
+                // Update persistent cache in Settings
+                SettingsService.Instance.CachedSettingsAddonPurchased = isPurchased;
+
+                return isPurchased;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to check license status from Store: {ex.Message}");
+
+                // Fall back to cached setting
+                var cachedStatus = SettingsService.Instance.CachedSettingsAddonPurchased;
+                if (cachedStatus.HasValue)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Using cached license status: {cachedStatus.Value}");
+                    return cachedStatus.Value;
+                }
+
+                // No cached status available, assume not purchased
+                System.Diagnostics.Debug.WriteLine("No cached license status available, assuming not purchased");
+                return false;
+            }
         }
 
         /// <summary>
