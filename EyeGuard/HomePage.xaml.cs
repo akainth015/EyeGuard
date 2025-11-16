@@ -130,16 +130,8 @@ namespace EyeGuard
             }
         }
 
-        private async void SetPauseButton_Click(object sender, RoutedEventArgs e)
+        private void SetPauseButton_Click(object sender, RoutedEventArgs e)
         {
-            // Check if user has the settings add-on license
-            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
-            {
-                // Open purchase dialog for the add-on
-                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
-                return;
-            }
-
             // Combine date and time, treating as local time
             var localDateTime = PauseDatePicker.Date + PauseTimePicker.Time;
             var localDateTimeObj = localDateTime.DateTime;
@@ -179,16 +171,8 @@ namespace EyeGuard
             }
         }
 
-        private async void ShowPauseButton_Click(object sender, RoutedEventArgs e)
+        private void ShowPauseButton_Click(object sender, RoutedEventArgs e)
         {
-            // Check if user has the settings add-on license
-            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
-            {
-                // Open purchase dialog for the add-on
-                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
-                return;
-            }
-
             // Set default time to current time + 1 hour
             var defaultTime = DateTime.Now.AddHours(1);
             PauseDatePicker.Date = new DateTimeOffset(defaultTime.Date);
@@ -200,31 +184,15 @@ namespace EyeGuard
             DateTimePickerControls.Visibility = Visibility.Visible;
         }
 
-        private async void ResumeBreaksButton_Click(object sender, RoutedEventArgs e)
+        private void ResumeBreaksButton_Click(object sender, RoutedEventArgs e)
         {
-            // Check if user has the settings add-on license
-            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
-            {
-                // Open purchase dialog for the add-on
-                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
-                return;
-            }
-
             // Clear the pause and return to not paused state
             SettingsService.Instance.PauseUntil = null;
             UpdatePauseStatus();
         }
 
-        private async void ChangeTimeButton_Click(object sender, RoutedEventArgs e)
+        private void ChangeTimeButton_Click(object sender, RoutedEventArgs e)
         {
-            // Check if user has the settings add-on license
-            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
-            {
-                // Open purchase dialog for the add-on
-                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
-                return;
-            }
-
             // Load current pause time into pickers
             var pauseUntil = SettingsService.Instance.PauseUntil;
             if (pauseUntil.HasValue)
@@ -246,16 +214,8 @@ namespace EyeGuard
             UpdatePauseStatus();
         }
 
-        private async void SettingsButton_Click(object sender, RoutedEventArgs e)
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Check if user has the settings add-on license
-            if (!await StoreUtils.Instance.IsSettingsAddonPurchasedAsync())
-            {
-                // Open purchase dialog for the add-on
-                await StoreUtils.Instance.PurchaseSettingsAddonAsync();
-                return;
-            }
-
             Frame.Navigate(typeof(SettingsPage));
         }
 
