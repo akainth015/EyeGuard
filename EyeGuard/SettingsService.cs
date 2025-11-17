@@ -20,6 +20,9 @@ namespace EyeGuard
 
         private const string PAUSE_UNTIL_KEY = "PauseUntil";
 
+        private const string BREAK_SOUND_KEY = "BreakSound";
+        public const string DEFAULT_BREAK_SOUND = "ms-appx:///Assets/timer-done.wav";
+
         private const string SETTINGS_ADDON_PURCHASED_KEY = "SettingsAddonPurchased";
 
         private static SettingsService _instance;
@@ -155,6 +158,28 @@ namespace EyeGuard
         /// Checks if breaks are currently paused
         /// </summary>
         public bool IsPaused => PauseUntil.HasValue && PauseUntil.Value > DateTime.UtcNow;
+
+        /// <summary>
+        /// Gets or sets the break sound file path (URI or file path)
+        /// </summary>
+        public string BreakSound
+        {
+            get
+            {
+                if (ApplicationData.GetDefault().LocalSettings.Values.TryGetValue(BREAK_SOUND_KEY, out var value))
+                {
+                    if (value is string soundPath && !string.IsNullOrWhiteSpace(soundPath))
+                    {
+                        return soundPath;
+                    }
+                }
+                return DEFAULT_BREAK_SOUND;
+            }
+            set
+            {
+                ApplicationData.GetDefault().LocalSettings.Values[BREAK_SOUND_KEY] = value ?? DEFAULT_BREAK_SOUND;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the cached license status for the Settings Add-on.

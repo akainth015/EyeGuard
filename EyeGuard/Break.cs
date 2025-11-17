@@ -14,10 +14,7 @@ namespace EyeGuard
         private int secondsInBreak;
         private bool useMinutesFormat;
         private Timer countdownTimer;
-        private MediaPlayer mediaPlayer = new MediaPlayer()
-        {
-            Source = MediaSource.CreateFromUri(new Uri("ms-appx:///Assets/timer-done.wav"))
-        };
+        private MediaPlayer mediaPlayer;
         private DispatcherQueue dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         internal Break()
@@ -29,6 +26,13 @@ namespace EyeGuard
 
             // Determine format based on initial duration
             useMinutesFormat = secondsInBreak >= 60;
+
+            // Initialize media player with the configured sound
+            string soundPath = SettingsService.Instance.BreakSound;
+            mediaPlayer = new MediaPlayer()
+            {
+                Source = MediaSource.CreateFromUri(new Uri(soundPath))
+            };
 
             EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, OpenRestWindowOnMonitor, IntPtr.Zero);
 
