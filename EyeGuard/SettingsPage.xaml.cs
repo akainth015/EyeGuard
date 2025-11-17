@@ -14,7 +14,9 @@ namespace EyeGuard
 
             // Attach event handlers after loading settings to avoid triggering during initialization
             BreakIntervalSlider.ValueChanged += BreakIntervalSlider_ValueChanged;
+            BreakIntervalSlider.ManipulationCompleted += BreakIntervalSlider_ManipulationCompleted;
             BreakDurationSlider.ValueChanged += BreakDurationSlider_ValueChanged;
+            BreakDurationSlider.ManipulationCompleted += BreakDurationSlider_ManipulationCompleted;
         }
 
         private void LoadSettings()
@@ -29,8 +31,15 @@ namespace EyeGuard
 
         private void BreakIntervalSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
+            // Only update the display text while dragging
             int value = (int)e.NewValue;
             BreakIntervalValueText.Text = value.ToString();
+        }
+
+        private void BreakIntervalSlider_ManipulationCompleted(object sender, Microsoft.UI.Xaml.Input.ManipulationCompletedRoutedEventArgs e)
+        {
+            // Save the setting when the user releases the slider
+            int value = (int)BreakIntervalSlider.Value;
             Debug.WriteLine("Break interval was updated to " + value + " minutes");
 
             var settingsService = SettingsService.Instance;
@@ -39,8 +48,15 @@ namespace EyeGuard
 
         private void BreakDurationSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
+            // Only update the display while dragging
             int value = (int)e.NewValue;
             UpdateBreakDurationDisplay(value);
+        }
+
+        private void BreakDurationSlider_ManipulationCompleted(object sender, Microsoft.UI.Xaml.Input.ManipulationCompletedRoutedEventArgs e)
+        {
+            // Save the setting when the user releases the slider
+            int value = (int)BreakDurationSlider.Value;
             Debug.WriteLine("Break duration was updated to " + value + " seconds");
 
             var settingsService = SettingsService.Instance;

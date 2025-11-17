@@ -49,6 +49,12 @@ namespace EyeGuard
             SkipBreakPressed(this, null);
         }
 
+        private void OpenEyeGuard_Click(object sender, RoutedEventArgs e)
+        {
+            var app = Application.Current as App;
+            app?.ShowMainWindow(null, null);
+        }
+
         /// <summary>
         ///     Brings the thread that created the specified window into the foreground and activates the window. Keyboard input is
         ///     directed to the window, and various visual cues are changed for the user. The system assigns a slightly higher

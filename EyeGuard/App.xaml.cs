@@ -38,8 +38,12 @@ namespace EyeGuard
 
         private void OnBreakIntervalChanged(object sender, int newInterval)
         {
-            // Reset the countdown when the interval changes
-            UpdateMinutesBeforeNextBreak(newInterval);
+            // Only update the countdown if the new interval is less than the time remaining
+            // This prevents extending an existing countdown when increasing the interval
+            if (newInterval < minutesBeforeNextBreak)
+            {
+                UpdateMinutesBeforeNextBreak(newInterval);
+            }
         }
 
         /// <summary>
@@ -164,7 +168,7 @@ namespace EyeGuard
             AppNotificationManager.Default.Show(notification);
         }
 
-        private void ShowMainWindow(object sender, AppActivationArguments e)
+        public void ShowMainWindow(object sender, AppActivationArguments e)
         {
             secretWindow.DispatcherQueue.TryEnqueue(() =>
             {
@@ -184,25 +188,6 @@ namespace EyeGuard
         {
             // Create a new main window the next time EyeGuard is launched
             mainWindow = null;
-        }
-
-        private void NotifyAlreadyRunningInBackground(object sender, AppActivationArguments e)
-        {
-            string minutesLeftText;
-            if (minutesBeforeNextBreak == 1)
-            {
-                minutesLeftText = "Your next break will be in 1 minute.";
-            }
-            else
-            {
-                minutesLeftText = "Your next break will be in " + minutesBeforeNextBreak + " minutes.";
-            }
-            var notification = new AppNotificationBuilder()
-                    .AddText("Already running")
-                    .AddText(minutesLeftText)
-                    .BuildNotification();
-            
-            AppNotificationManager.Default.Show(notification);
         }
 
         private void UpdateMinutesBeforeNextBreak(int value)

@@ -62,7 +62,8 @@
                         TickFrequency="10"
                         TickPlacement="BottomRight"
                         VerticalAlignment="Center"
-                        Margin="0,0,16,0"/>
+                        Margin="0,0,16,0"
+                        ManipulationMode="TranslateX"/>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                             <TextBlock
@@ -124,7 +125,8 @@
                         TickFrequency="60"
                         TickPlacement="BottomRight"
                         VerticalAlignment="Center"
-                        Margin="0,0,16,0"/>
+                        Margin="0,0,16,0"
+                        ManipulationMode="TranslateX"/>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                             <TextBlock

@@ -105,6 +105,7 @@ namespace EyeGuard
         /// <returns>True if the add-on is purchased, false otherwise.</returns>
         public async Task<bool> IsSettingsAddonPurchasedAsync()
         {
+#pragma warning disable CS0162 // Unreachable code detected
             // Handle test modes
             if (TEST_MODE == StoreTestMode.DEV_NOT_PURCHASED)
             {
@@ -155,6 +156,7 @@ namespace EyeGuard
                 System.Diagnostics.Debug.WriteLine("No cached license status available, assuming not purchased");
                 return false;
             }
+#pragma warning restore CS0162 // Unreachable code detected
         }
 
         /// <summary>
@@ -204,6 +206,7 @@ namespace EyeGuard
         /// <returns>True if purchase was successful, false otherwise.</returns>
         public async Task<bool> PurchaseSettingsAddonAsync()
         {
+#pragma warning disable CS0162 // Unreachable code detected
             // Handle test modes
             if (TEST_MODE == StoreTestMode.DEV_NOT_PURCHASED)
             {
@@ -273,6 +276,7 @@ namespace EyeGuard
                 System.Diagnostics.Debug.WriteLine($"Error during purchase: {ex.Message}");
                 return false;
             }
+#pragma warning restore CS0162 // Unreachable code detected
         }
 
         /// <summary>
