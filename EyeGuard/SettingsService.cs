@@ -170,7 +170,19 @@ namespace EyeGuard
                 {
                     if (value is string soundPath && !string.IsNullOrWhiteSpace(soundPath))
                     {
-                        return soundPath;
+                        // If it's an app resource URI, return it
+                        if (soundPath.StartsWith("ms-appx://"))
+                        {
+                            return soundPath;
+                        }
+
+                        // If it's a file path, check if it exists
+                        if (System.IO.File.Exists(soundPath))
+                        {
+                            return soundPath;
+                        }
+
+                        // File doesn't exist, fall back to default
                     }
                 }
                 return DEFAULT_BREAK_SOUND;

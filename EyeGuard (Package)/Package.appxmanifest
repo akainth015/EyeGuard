@@ -12,7 +12,7 @@
   <Identity
     Name="31929AanandKainth.EyeGuard"
     Publisher="CN=16991B57-0156-4AA4-94F5-7AD4D5640326"
-    Version="2.2.0.0" />
+    Version="2.3.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="72fa842d-8269-4777-8a57-a56d72ff0396" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
