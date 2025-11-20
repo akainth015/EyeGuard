@@ -22,6 +22,33 @@ namespace EyeGuard
     }
 
     /// <summary>
+    /// Result of a purchase attempt
+    /// </summary>
+    public enum PurchaseResult
+    {
+        /// <summary>Purchase completed successfully</summary>
+        Succeeded,
+
+        /// <summary>Product was already purchased</summary>
+        AlreadyPurchased,
+
+        /// <summary>User cancelled the purchase</summary>
+        Cancelled,
+
+        /// <summary>Network error occurred</summary>
+        NetworkError,
+
+        /// <summary>Server error occurred</summary>
+        ServerError,
+
+        /// <summary>Product not found in Store</summary>
+        NotFound,
+
+        /// <summary>Unknown error occurred</summary>
+        Unknown
+    }
+
+    /// <summary>
     /// Utility class for managing Microsoft Store operations including
     /// product purchases and license validation.
     /// </summary>
@@ -35,7 +62,7 @@ namespace EyeGuard
         // - StoreTestMode.DEV_NOT_PURCHASED: Simulate user without add-on
         // - StoreTestMode.DEV_PURCHASED: Simulate user with add-on
         // - StoreTestMode.STORE: Use actual Store (same as Release)
-        public const StoreTestMode TEST_MODE = StoreTestMode.DEV_PURCHASED;
+        public const StoreTestMode TEST_MODE = StoreTestMode.STORE;
 #else
         // Release builds always use the real Store
         public const StoreTestMode TEST_MODE = StoreTestMode.STORE;
@@ -184,10 +211,14 @@ namespace EyeGuard
                 }
 
                 // Check if the add-on is in the license
-                if (appLicense.AddOnLicenses.TryGetValue(SETTINGS_ADDON_PRODUCT_ID, out StoreLicense addonLicense))
+                // AddOnLicenses is keyed by Store ID, so we need to search by InAppOfferToken
+                foreach (var kvp in appLicense.AddOnLicenses)
                 {
-                    // Check if license is active (not expired or revoked)
-                    return addonLicense.IsActive;
+                    if (kvp.Value.InAppOfferToken == SETTINGS_ADDON_PRODUCT_ID)
+                    {
+                        // Check if license is active (not expired or revoked)
+                        return kvp.Value.IsActive;
+                    }
                 }
 
                 // Add-on not found in licenses
@@ -203,20 +234,20 @@ namespace EyeGuard
         /// <summary>
         /// Initiates the purchase flow for the Settings Add-on.
         /// </summary>
-        /// <returns>True if purchase was successful, false otherwise.</returns>
-        public async Task<bool> PurchaseSettingsAddonAsync()
+        /// <returns>Result of the purchase attempt.</returns>
+        public async Task<PurchaseResult> PurchaseSettingsAddonAsync()
         {
 #pragma warning disable CS0162 // Unreachable code detected
             // Handle test modes
             if (TEST_MODE == StoreTestMode.DEV_NOT_PURCHASED)
             {
                 System.Diagnostics.Debug.WriteLine("TEST_MODE: Simulating purchase attempt (always fails in DEV_NOT_PURCHASED mode)");
-                return false;
+                return PurchaseResult.Cancelled;
             }
             else if (TEST_MODE == StoreTestMode.DEV_PURCHASED)
             {
                 System.Diagnostics.Debug.WriteLine("TEST_MODE: Simulating purchase (already purchased in DEV_PURCHASED mode)");
-                return true;
+                return PurchaseResult.AlreadyPurchased;
             }
 
             // Production mode - actual Store purchase
@@ -227,7 +258,7 @@ namespace EyeGuard
                 if (_storeContext == null)
                 {
                     System.Diagnostics.Debug.WriteLine("StoreContext is null. Cannot initiate purchase.");
-                    return false;
+                    return PurchaseResult.Unknown;
                 }
 
                 // First, get the product to obtain its Store ID
@@ -235,7 +266,7 @@ namespace EyeGuard
                 if (product == null)
                 {
                     System.Diagnostics.Debug.WriteLine("Could not find the settings add-on product.");
-                    return false;
+                    return PurchaseResult.NotFound;
                 }
 
                 // Request purchase using the Store ID
@@ -247,34 +278,34 @@ namespace EyeGuard
                     case StorePurchaseStatus.Succeeded:
                         System.Diagnostics.Debug.WriteLine("Purchase succeeded!");
                         InvalidateCache();
-                        return true;
+                        return PurchaseResult.Succeeded;
 
                     case StorePurchaseStatus.AlreadyPurchased:
                         System.Diagnostics.Debug.WriteLine("Product already purchased.");
                         InvalidateCache();
-                        return true;
+                        return PurchaseResult.AlreadyPurchased;
 
                     case StorePurchaseStatus.NotPurchased:
                         System.Diagnostics.Debug.WriteLine("User cancelled the purchase.");
-                        return false;
+                        return PurchaseResult.Cancelled;
 
                     case StorePurchaseStatus.NetworkError:
                         System.Diagnostics.Debug.WriteLine("Network error during purchase.");
-                        return false;
+                        return PurchaseResult.NetworkError;
 
                     case StorePurchaseStatus.ServerError:
                         System.Diagnostics.Debug.WriteLine("Server error during purchase.");
-                        return false;
+                        return PurchaseResult.ServerError;
 
                     default:
                         System.Diagnostics.Debug.WriteLine($"Unknown purchase status: {result.Status}");
-                        return false;
+                        return PurchaseResult.Unknown;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error during purchase: {ex.Message}");
-                return false;
+                return PurchaseResult.Unknown;
             }
 #pragma warning restore CS0162 // Unreachable code detected
         }
@@ -360,13 +391,17 @@ namespace EyeGuard
                     return null;
                 }
 
-                // Find the settings add-on
-                if (addonsResult.Products.TryGetValue(SETTINGS_ADDON_PRODUCT_ID, out StoreProduct product))
+                // Find the settings add-on by InAppOfferToken
+                // Products dictionary is keyed by Store ID, not Product ID
+                foreach (var kvp in addonsResult.Products)
                 {
-                    return product;
+                    if (kvp.Value.InAppOfferToken == SETTINGS_ADDON_PRODUCT_ID)
+                    {
+                        return kvp.Value;
+                    }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"Product {SETTINGS_ADDON_PRODUCT_ID} not found.");
+                System.Diagnostics.Debug.WriteLine($"Product with InAppOfferToken '{SETTINGS_ADDON_PRODUCT_ID}' not found.");
                 return null;
             }
             catch (Exception ex)
