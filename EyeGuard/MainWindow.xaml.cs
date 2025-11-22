@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using System;
 
 namespace EyeGuard
 {
@@ -10,9 +11,30 @@ namespace EyeGuard
         public MainWindow()
         {
             InitializeComponent();
+            Title = "EyeGuard";
             AppWindow.SetIcon("Assets/EyeGuard.ico");
+
+            // Make window borderless
+            AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+            // Using a 48 px tall title bar because a back button will be present
+            AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+
+            // Navigate to home page by default
+            ContentFrame.Navigate(typeof(HomePage));
         }
 
-        // TODO: Keep the countdown timer in the main window in sync with the app
+        public void ForceFocus()
+        {
+            // Get window handle
+            IntPtr windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            RestWindow.ShowWindow(windowHandle, 6);
+            RestWindow.SetForegroundWindow(windowHandle);
+            RestWindow.ShowWindow(windowHandle, 1);
+        }
+
+        public void NavigateToHome()
+        {
+            ContentFrame.Navigate(typeof(HomePage));
+        }
     }
 }

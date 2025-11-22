@@ -14,9 +14,15 @@ namespace EyeGuard
     /// </summary>
     public partial class App : Application
     {
-        public const int BREAK_INTERVAL = 20; // this is in minutes
-
         private Break breakInstance;
+        private int consecutiveRestartSkips = 0;
+        private const int MAX_RESTART_SKIPS = 3;
+
+        // Event to notify when the countdown changes
+        public event EventHandler<int> CountdownChanged;
+
+        // Property to expose the current countdown value
+        public int MinutesBeforeNextBreak => minutesBeforeNextBreak;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -25,6 +31,19 @@ namespace EyeGuard
         public App()
         {
             InitializeComponent();
+
+            // Subscribe to settings changes
+            SettingsService.Instance.BreakIntervalChanged += OnBreakIntervalChanged;
+        }
+
+        private void OnBreakIntervalChanged(object sender, int newInterval)
+        {
+            // Only update the countdown if the new interval is less than the time remaining
+            // This prevents extending an existing countdown when increasing the interval
+            if (newInterval < minutesBeforeNextBreak)
+            {
+                UpdateMinutesBeforeNextBreak(newInterval);
+            }
         }
 
         /// <summary>
@@ -43,41 +62,55 @@ namespace EyeGuard
                 return;
             }
 
-            AppInstance.GetCurrent().Activated += NotifyAlreadyRunningInBackground;
+            AppInstance.GetCurrent().Activated += ShowMainWindow;
 
+            // If "suppressNotifications" is a command-line argument, then a notification that EyeGuard
+            // is starting should be skipped. Reminder that the first command-line argument is the
+            // path to the EyeGuard executable (hence the length check is 1 instead of 0)
             var clArgs = Environment.GetCommandLineArgs();
             if (activatedEventArgs.Kind == ExtendedActivationKind.Launch && clArgs.Length == 1)
             {
                 NotifyStartingInBackground();
             }
 
-            mainWindow = new MainWindow();
+            secretWindow = new MainWindow();
 
             while (true)
             {
                 await Task.Delay(TimeSpan.FromMinutes(1));
-                minutesBeforeNextBreak -= 1;
+                UpdateMinutesBeforeNextBreak(minutesBeforeNextBreak - 1);
 
-                // If the user is not at their computer, the next break should be 20 minutes after they
-                // return and are using the computer for 20 minutes straight.
+                // If the user is not at their computer, the next break should be configured interval minutes after they
+                // return and are using the computer for that duration straight.
                 PInvokeUtils.SHQueryUserNotificationState(out var notificationState);
                 if (notificationState == 1)
                 {
-                    minutesBeforeNextBreak = BREAK_INTERVAL; // FOR TESTING
-                    Debug.WriteLine("Setting the next break to " + BREAK_INTERVAL + " minutes from now because the user is away");
+                    int breakInterval = SettingsService.Instance.BreakInterval;
+                    UpdateMinutesBeforeNextBreak(breakInterval);
+                    Debug.WriteLine("Setting the next break to " + breakInterval + " minutes from now because the user is away");
                     continue;
                 }
 
                 if (minutesBeforeNextBreak == 0)
                 {
-                    minutesBeforeNextBreak = BREAK_INTERVAL;
+                    int breakInterval = SettingsService.Instance.BreakInterval;
+                    UpdateMinutesBeforeNextBreak(breakInterval);
+
+                    // Are breaks paused? Skip this break.
+                    if (SettingsService.Instance.IsPaused)
+                    {
+                        Debug.WriteLine("Skipping break because breaks are paused");
+                        // the break should trigger immediately after the pause period ends
+                        UpdateMinutesBeforeNextBreak(1);
+                        continue;
+                    }
 
                     // Is it a focus session? Skip this break.
                     if (FocusSessionManager.IsSupported && FocusSessionManager.GetDefault().IsFocusActive)
                     {
                         Debug.WriteLine("Skipping break because of a focus session");
                         // the break should trigger immediately after the user is done with their focus session
-                        minutesBeforeNextBreak = 1;
+                        UpdateMinutesBeforeNextBreak(1);
                         continue;
                     }
 
@@ -86,7 +119,7 @@ namespace EyeGuard
                     {
                         Debug.WriteLine("Skipping break because user is not accepting notifications");
                         // the break should trigger immediately after the user is done with their activity
-                        minutesBeforeNextBreak = 1;
+                        UpdateMinutesBeforeNextBreak(1);
                         continue;
                     }
 
@@ -96,13 +129,31 @@ namespace EyeGuard
                     {
                         Debug.WriteLine("Skipping break because the users's application is in full-screen");
                         // the break should trigger immediately after the user exits full screen
-                        minutesBeforeNextBreak = 1;
+                        UpdateMinutesBeforeNextBreak(1);
                         continue;
                     }
 
                     breakInstance = new Break();
-                    await Task.Delay(TimeSpan.FromSeconds(21));
-                    AppInstance.Restart("suppressNotification");
+                    await Task.Delay(TimeSpan.FromSeconds(SettingsService.Instance.BreakDuration + 1));
+
+                    // https://github.com/microsoft/microsoft-ui-xaml/issues/7282#issuecomment-1717060648
+                    // The code below can be safely deleted once resolved.
+                    if (mainWindow == null)
+                    {
+                        Debug.WriteLine("Restarting EyeGuard to mitigate a memory leak in the WinUI framework");
+                        AppInstance.Restart("suppressNotification");
+                    }
+                    else
+                    {
+                        consecutiveRestartSkips++;
+                        Debug.WriteLine($"Skipping app restart because the main window is open (skip {consecutiveRestartSkips}/{MAX_RESTART_SKIPS})");
+
+                        if (consecutiveRestartSkips >= MAX_RESTART_SKIPS)
+                        {
+                            Debug.WriteLine($"Restarting anyway after {MAX_RESTART_SKIPS} consecutive skips to mitigate memory leak");
+                            AppInstance.Restart("suppressNotification");
+                        }
+                    }
                 }
             }
         }
@@ -117,26 +168,39 @@ namespace EyeGuard
             AppNotificationManager.Default.Show(notification);
         }
 
-        private void NotifyAlreadyRunningInBackground(object sender, AppActivationArguments e)
+        public void ShowMainWindow(object sender, AppActivationArguments e)
         {
-            string minutesLeftText;
-            if (minutesBeforeNextBreak == 1)
+            secretWindow.DispatcherQueue.TryEnqueue(() =>
             {
-                minutesLeftText = "Your next break will be in 1 minute.";
-            }
-            else
-            {
-                minutesLeftText = "Your next break will be in " + minutesBeforeNextBreak + " minutes.";
-            }
-            var notification = new AppNotificationBuilder()
-                    .AddText("Already running")
-                    .AddText(minutesLeftText)
-                    .BuildNotification();
-            
-            AppNotificationManager.Default.Show(notification);
+                if (mainWindow == null)
+                {
+                    mainWindow = new MainWindow();
+                    mainWindow.Closed += ClearMainWindow;
+                }
+                mainWindow.Activate();
+                // because EyeGuard doesn't currently have UI focus or whatever, the window is not opened on top
+                // so I will force focus because the user has requested it
+                mainWindow.ForceFocus();
+            });
+        }
+
+        private void ClearMainWindow(object sender, WindowEventArgs args)
+        {
+            // Create a new main window the next time EyeGuard is launched
+            mainWindow = null;
+        }
+
+        private void UpdateMinutesBeforeNextBreak(int value)
+        {
+            minutesBeforeNextBreak = value;
+            CountdownChanged?.Invoke(this, minutesBeforeNextBreak);
         }
 
         private MainWindow mainWindow;
-        private int minutesBeforeNextBreak = BREAK_INTERVAL;
+        private MainWindow secretWindow;
+        private int minutesBeforeNextBreak = SettingsService.Instance.BreakInterval;
+
+        public MainWindow Window => mainWindow;
+        public MainWindow SecretWindow => secretWindow;
     }
 }

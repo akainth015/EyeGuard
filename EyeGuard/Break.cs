@@ -11,17 +11,28 @@ namespace EyeGuard
     internal class Break
     {
         private List<RestWindow> restWindows;
-        private int secondsInBreak = 20;
+        private int secondsInBreak;
+        private bool useMinutesFormat;
         private Timer countdownTimer;
-        private MediaPlayer mediaPlayer = new MediaPlayer()
-        {
-            Source = MediaSource.CreateFromUri(new Uri("ms-appx:///Assets/timer-done.wav"))
-        };
+        private MediaPlayer mediaPlayer;
         private DispatcherQueue dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         internal Break()
         {
             restWindows = new List<RestWindow>();
+
+            // Get break duration from settings
+            secondsInBreak = SettingsService.Instance.BreakDuration;
+
+            // Determine format based on initial duration
+            useMinutesFormat = secondsInBreak >= 60;
+
+            // Initialize media player with the configured sound
+            string soundPath = SettingsService.Instance.BreakSound;
+            mediaPlayer = new MediaPlayer()
+            {
+                Source = MediaSource.CreateFromUri(new Uri(soundPath))
+            };
 
             EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, OpenRestWindowOnMonitor, IntPtr.Zero);
 
@@ -48,8 +59,24 @@ namespace EyeGuard
             {
                 dispatcherQueue.TryEnqueue(() =>
                 {
-                    window.CountdownTextBlock.Text = secondsInBreak.ToString();
+                    window.CountdownTextBlock.Text = FormatTimeRemaining(secondsInBreak);
                 });
+            }
+        }
+
+        private string FormatTimeRemaining(int totalSeconds)
+        {
+            if (useMinutesFormat)
+            {
+                // Break started with 60+ seconds: always show minutes:seconds format
+                int minutes = totalSeconds / 60;
+                int seconds = totalSeconds % 60;
+                return $"{minutes}:{seconds:D2}";
+            }
+            else
+            {
+                // Break started with less than 60 seconds: show seconds only
+                return totalSeconds.ToString();
             }
         }
 
@@ -73,6 +100,7 @@ namespace EyeGuard
             dispatcherQueue.TryEnqueue(() =>
             {
                 var window = new RestWindow();
+                window.CountdownTextBlock.Text = FormatTimeRemaining(secondsInBreak);
                 window.FullscreenOnMonitor(hMonitor);
 
                 restWindows.Add(window);
