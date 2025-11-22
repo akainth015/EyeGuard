@@ -261,15 +261,70 @@ namespace EyeGuard
         private async void PurchaseAddonButton_Click(object sender, RoutedEventArgs e)
         {
             // Attempt to purchase the add-on
-            bool purchaseSuccessful = await StoreUtils.Instance.PurchaseSettingsAddonAsync();
+            PurchaseResult result = await StoreUtils.Instance.PurchaseSettingsAddonAsync();
 
-            // If purchase was successful, refresh the UI
-            if (purchaseSuccessful)
+            // Display result to user
+            switch (result)
             {
-                // Hide promotion, show settings button and pause controls
-                SettingsAddonPromotion.Visibility = Visibility.Collapsed;
-                SettingsButton.Visibility = Visibility.Visible;
-                UpdatePauseStatus(); // This will show the appropriate pause controls
+                case PurchaseResult.Succeeded:
+                    PurchaseResultInfoBar.Title = "Purchase Successful";
+                    PurchaseResultInfoBar.Message = "Thank you for purchasing the Settings Add-on!";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Success;
+                    PurchaseResultInfoBar.IsOpen = true;
+
+                    // Hide promotion, show settings button and pause controls
+                    SettingsAddonPromotion.Visibility = Visibility.Collapsed;
+                    SettingsButton.Visibility = Visibility.Visible;
+                    UpdatePauseStatus();
+                    break;
+
+                case PurchaseResult.AlreadyPurchased:
+                    PurchaseResultInfoBar.Title = "Already Purchased";
+                    PurchaseResultInfoBar.Message = "You already own the Settings Add-on.";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Informational;
+                    PurchaseResultInfoBar.IsOpen = true;
+
+                    // Hide promotion, show settings button and pause controls
+                    SettingsAddonPromotion.Visibility = Visibility.Collapsed;
+                    SettingsButton.Visibility = Visibility.Visible;
+                    UpdatePauseStatus();
+                    break;
+
+                case PurchaseResult.Cancelled:
+                    PurchaseResultInfoBar.Title = "Purchase Cancelled";
+                    PurchaseResultInfoBar.Message = "The purchase was cancelled.";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Informational;
+                    PurchaseResultInfoBar.IsOpen = true;
+                    break;
+
+                case PurchaseResult.NetworkError:
+                    PurchaseResultInfoBar.Title = "Network Error";
+                    PurchaseResultInfoBar.Message = "A network error occurred. Please check your connection and try again.";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Error;
+                    PurchaseResultInfoBar.IsOpen = true;
+                    break;
+
+                case PurchaseResult.ServerError:
+                    PurchaseResultInfoBar.Title = "Server Error";
+                    PurchaseResultInfoBar.Message = "A server error occurred. Please try again later.";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Error;
+                    PurchaseResultInfoBar.IsOpen = true;
+                    break;
+
+                case PurchaseResult.NotFound:
+                    PurchaseResultInfoBar.Title = "Not Available Yet";
+                    PurchaseResultInfoBar.Message = "The Settings Add-on is not available yet. Please check back later.";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Warning;
+                    PurchaseResultInfoBar.IsOpen = true;
+                    break;
+
+                case PurchaseResult.Unknown:
+                default:
+                    PurchaseResultInfoBar.Title = "Error Occurred";
+                    PurchaseResultInfoBar.Message = "An unexpected error occurred. Please try again.";
+                    PurchaseResultInfoBar.Severity = InfoBarSeverity.Error;
+                    PurchaseResultInfoBar.IsOpen = true;
+                    break;
             }
         }
     }

@@ -122,6 +122,42 @@ For creating button menus with quick-select options:
 </DropDownButton>
 ```
 
+### Slider Interaction Pattern
+For better UX, sliders should update display values in real-time but only save settings when the user releases the slider.
+
+**Benefits:**
+- Prevents excessive setting saves and event triggers while dragging
+- Reduces unnecessary work (e.g., timer resets) during adjustment
+- Provides immediate visual feedback
+
+**Implementation:**
+```csharp
+// In constructor, attach both events
+BreakIntervalSlider.ValueChanged += BreakIntervalSlider_ValueChanged;
+BreakIntervalSlider.ManipulationCompleted += BreakIntervalSlider_ManipulationCompleted;
+
+// ValueChanged updates display only
+private void BreakIntervalSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+{
+    int value = (int)e.NewValue;
+    BreakIntervalValueText.Text = value.ToString();
+}
+
+// ManipulationCompleted saves the setting
+private void BreakIntervalSlider_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
+{
+    int value = (int)BreakIntervalSlider.Value;
+    SettingsService.Instance.BreakInterval = value;
+}
+```
+
+**XAML:**
+```xaml
+<Slider x:Name="BreakIntervalSlider"
+        ManipulationMode="TranslateX"
+        ... />
+```
+
 ## Development Testing
 
 ### Test Mode Pattern
@@ -172,6 +208,108 @@ Enforce licensing at the UI visibility level rather than in individual handlers:
 - Avoids redundant license checks in every button handler
 - Cleaner, more maintainable code
 - Single source of truth for license enforcement
+
+### Smart State Update Pattern
+When a setting changes that affects an active state (like a running timer), decide intelligently whether to apply the change immediately.
+
+**Pattern:** Only update active state when the new value would trigger an earlier or more urgent action.
+
+**Example:**
+```csharp
+private void OnSettingChanged(object sender, int newValue)
+{
+    // Only update if new value is more restrictive/urgent than current state
+    if (newValue < currentStateValue)
+    {
+        UpdateCurrentState(newValue);
+    }
+    // Otherwise, let current state complete naturally
+}
+```
+
+### File Path Setting Validation
+When storing file paths in settings, validate they exist before use and provide fallback behavior.
+
+**Pattern:**
+```csharp
+public string FileSetting
+{
+    get
+    {
+        if (TryGetStoredValue(out var filePath))
+        {
+            // Trust app resource URIs
+            if (filePath.StartsWith("ms-appx://"))
+                return filePath;
+
+            // Validate filesystem paths
+            if (System.IO.File.Exists(filePath))
+                return filePath;
+        }
+        return DEFAULT_VALUE;
+    }
+}
+```
+
+**Benefits:**
+- Graceful degradation if user deletes files
+- No crashes from missing resources
+- Transparent fallback behavior
+
+### Media File Preview with Validation
+When allowing users to select media files, provide preview functionality with duration display and validation.
+
+**Key components:**
+1. **Duration extraction**: Load media temporarily to read metadata
+2. **Play/Stop toggle**: Allow users to preview and abort
+3. **Validation warnings**: Alert if media doesn't meet requirements
+4. **Async loading**: Use TaskCompletionSource to wait for MediaOpened event
+
+**Pattern:**
+```csharp
+private async void UpdateMediaInfo(string mediaPath)
+{
+    var tempPlayer = new MediaPlayer { Source = MediaSource.CreateFromUri(new Uri(mediaPath)) };
+
+    var tcs = new TaskCompletionSource<bool>();
+    tempPlayer.MediaOpened += (s, e) => tcs.TrySetResult(true);
+    tempPlayer.MediaFailed += (s, e) => tcs.TrySetResult(false);
+
+    await tcs.Task;
+
+    var duration = tempPlayer.PlaybackSession.NaturalDuration;
+    // Display duration, show warnings if needed
+
+    tempPlayer.Dispose();
+}
+```
+
+### In-App Messaging Pattern
+Use Grid layout to add non-intrusive informational footers to full-screen or centered UI.
+
+**Pattern:**
+```xaml
+<Grid>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Main content (centered or fullscreen) -->
+    <ContentControl Grid.Row="0" />
+
+    <!-- Footer message (bottom-aligned) -->
+    <StackPanel Grid.Row="1" Margin="20">
+        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.7"/>
+    </StackPanel>
+</Grid>
+```
+
+**Use cases:**
+- Feature announcements
+- Tips and help text
+- Version update notifications
+- Action prompts without dialogs
 
 ## Timezone Handling
 

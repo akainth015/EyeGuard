@@ -28,6 +28,12 @@
 
         <!-- Main Content -->
         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="600">
+            <!-- Purchase Result InfoBar -->
+            <InfoBar x:Name="PurchaseResultInfoBar"
+                     IsOpen="False"
+                     IsClosable="True"
+                     Margin="0,0,0,16"/>
+
             <Image Source="/Assets/EyeGuard.png" Height="256" />
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" HorizontalTextAlignment="Center">EyeGuard</TextBlock>
             <TextBlock x:Name="CountdownTextBlock" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalTextAlignment="Center" Margin="16">
