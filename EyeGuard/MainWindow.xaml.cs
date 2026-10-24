@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using System;
+using System.Diagnostics;
+using Windows.Storage;
 
 namespace EyeGuard
 {
@@ -8,11 +10,13 @@ namespace EyeGuard
     /// </summary>
     public sealed partial class MainWindow : Window
     {
+        private const string WindowIconUri = "ms-appx:///Assets/EyeGuard.ico";
+
         public MainWindow()
         {
             InitializeComponent();
             Title = "EyeGuard";
-            AppWindow.SetIcon("Assets/EyeGuard.ico");
+            SetWindowIcon();
 
             // Make window borderless
             AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
@@ -21,6 +25,25 @@ namespace EyeGuard
 
             // Navigate to home page by default
             ContentFrame.Navigate(typeof(HomePage));
+        }
+
+        /// <summary>
+        /// Sets the window icon. AppWindow.SetIcon only accepts a fully qualified path, so the
+        /// packaged asset is resolved through ms-appx (the same scheme the break sound uses)
+        /// instead of passing a working-directory-relative path.
+        /// </summary>
+        private async void SetWindowIcon()
+        {
+            try
+            {
+                StorageFile iconFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(WindowIconUri));
+                AppWindow.SetIcon(iconFile.Path);
+            }
+            catch (Exception ex)
+            {
+                // A missing or unreadable icon must not take the window down; the default stays.
+                Debug.WriteLine("Could not set the window icon: " + ex.Message);
+            }
         }
 
         public void ForceFocus()

@@ -185,13 +185,24 @@ This prevents accidentally shipping debug/test modes in production while allowin
 ## Git Configuration
 
 ### Line Endings
-For Windows development, configure Git to use CRLF:
+For Windows development, keep the worktree CRLF and normalize to LF in the store.
+
+With Git:
 
 ```bash
 git config core.autocrlf true
 ```
 
-This eliminates warnings about CRLF/LF conversion during commits.
+With Jujutsu, which honours neither `.gitattributes` nor `core.autocrlf`
+([jj#53](https://github.com/jj-vcs/jj/issues/53)):
+
+```bash
+jj config set --repo working-copy.eol-conversion input-output
+```
+
+Either one eliminates the whole-worktree CRLF/LF churn that otherwise shows up as
+dozens of modified files on checkout. Jujutsu keeps its repo config outside the
+repository, so that setting does not travel with a clone.
 
 ## Architecture Patterns
 

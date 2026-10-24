@@ -130,16 +130,21 @@
     <None Include="Package.StoreAssociation.xml" />
   </ItemGroup>
   <ItemGroup>
+    <!-- A loose-file registration reads the package straight from $(OutDir), so the tile and notification logos have to
+         land there too; without this the taskbar button and toasts fall back to a plain placeholder. -->
+    <Content Update="Images\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\EyeGuard\EyeGuard.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win10-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002">
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1">
       <IncludeAssets>build</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6901">
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705">
       <IncludeAssets>build</IncludeAssets>
     </PackageReference>
   </ItemGroup>
